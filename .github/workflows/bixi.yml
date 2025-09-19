@@ -1,0 +1,42 @@
+name: Bixi Data Logger
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: bixi-logger
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests
+
+      - name: Mask secret to prevent log leaks
+        run: echo "::add-mask::${{ secrets.STATION_ID }}"
+
+      - name: Run logger
+        env:
+          STATION_ID: ${{ secrets.STATION_ID }}
+        run: python bixi_logger.py
+
+      - name: Commit results
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add results.csv
+          git commit -m "Update results" || echo "No changes to commit"
+          git push
