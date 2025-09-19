@@ -3,7 +3,6 @@ name: Bixi Data Logger
 on:
   schedule:
     - cron: "*/5 * * * *"
-  workflow_dispatch:
 
 concurrency:
   group: bixi-logger
